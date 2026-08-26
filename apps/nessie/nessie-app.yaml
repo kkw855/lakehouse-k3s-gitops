@@ -14,6 +14,7 @@ spec:
       path: apps/nessie/chart # 잠시 차트 도메인이 죽어서 로컬에 다운받은 차트를 대신 사용.
       targetRevision: main
       helm:
+        releaseName: nessie
         valueFiles:
           - $values/apps/nessie/values-nessie.yaml
     - repoURL: https://github.com/kkw855/lakehouse-k3s-gitops.git
