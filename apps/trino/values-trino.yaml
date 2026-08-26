@@ -1,0 +1,51 @@
+server:
+  workers: 2
+
+coordinator:
+  jvm:
+    # 차트 기본값 8G. 실습 데이터가 CSV 몇 개라 과하다.
+    maxHeapSize: "2G"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 2560Mi
+    limits:
+      memory: 3Gi
+
+worker:
+  jvm:
+    maxHeapSize: "2G"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 2560Mi
+    limits:
+      memory: 3Gi
+
+# 강의의 trino_config/catalog/iceberg.properties 를 그대로 옮긴 것
+catalogs:
+  iceberg: |
+    connector.name=iceberg
+    iceberg.catalog.type=nessie
+    iceberg.nessie-catalog.uri=http://nessie.lakehouse-k3s.svc.cluster.local:19120/api/v2
+    iceberg.nessie-catalog.ref=main
+    iceberg.nessie-catalog.default-warehouse-dir=s3://local-lakehouse
+    fs.native-s3.enabled=true
+    s3.endpoint=http://minio.minio.svc.cluster.local:9000
+    s3.region=us-east-1
+    s3.path-style-access=true
+    # lakehouse-k3s 네임스페이스에 minio-secret 사용
+    s3.aws-access-key=${ENV:MINIO_USER}
+    s3.aws-secret-key=${ENV:MINIO_PASSWORD}
+
+env:
+  - name: MINIO_USER
+    valueFrom:
+      secretKeyRef:
+        name: minio-secret
+        key: minio-user
+  - name: MINIO_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: minio-secret
+        key: minio-password

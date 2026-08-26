@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lakehouse-k3s-trino
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "3" # Nessie가 먼저 그래야 Trino -> Nessie 연결
+spec:
+  project: default
+  sources:
+    - repoURL: https://trinodb.github.io/charts
+      chart: trino
+      targetRevision: 1.40.0
+      helm:
+        releaseName: trino
+        valueFiles:
+          - $values/apps/trino/values-trino.yaml
+    - repoURL: https://github.com/kkw855/lakehouse-k3s-gitops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lakehouse-k3s
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
