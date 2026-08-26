@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: https://github.com/kkw855/lakehouse-k3s-gitops.git
       path: apps/nessie/chart # 잠시 차트 도메인이 죽어서 로컬에 다운받은 차트를 대신 사용.
-      targetRevision: 0.108.4
+      targetRevision: main
       helm:
         valueFiles:
           - $values/apps/nessie/values-nessie.yaml
