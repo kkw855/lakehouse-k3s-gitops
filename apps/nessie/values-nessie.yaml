@@ -1,0 +1,21 @@
+versionStoreType: JDBC
+
+jdbc:
+  # 자동으로 public에 nessie 만듦
+  jdbcUrl: jdbc:postgresql://postgres-rw.postgres.svc.cluster.local:5432/nessie
+  secret:
+    name: postgres-secret # lakehouse-k3s 네임스페이스에 SealedSecret
+    username: postgres-user
+    password: postgres-password
+
+# 차트 기본값이 {} (무제한)이라 명시. MS-A2 소음 고려해 넉넉하지 않게.
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+# Postgres/Redis/MinIO와 동일하게 외부 노출 없이 telepresence로 접근
+ingress:
+  enabled: false

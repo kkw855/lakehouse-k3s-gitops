@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lakehouse-k3s-nessie
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # postgres, minio SealedSecret 먼저 생성
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.projectnessie.org
+      chart: nessie
+      targetRevision: 0.108.4
+      helm:
+        valueFiles:
+          - $values/apps/nessie/values-nessie.yaml
+    - repoURL: https://github.com/kkw855/lakehouse-k3s-gitops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lakehouse-k3s
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
