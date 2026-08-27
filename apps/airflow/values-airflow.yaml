@@ -1,0 +1,51 @@
+airflowVersion: "3.0.6"
+
+# 강의는 CeleryExecutor. k8s에서는 task마다 Pod을 띄우는 방식으로 전환.
+# Redis 브로커와 worker Deployment가 통째로 불필요해진다.
+executor: "KubernetesExecutor"
+
+images:
+  airflow:
+    repository: ghcr.io/kkw855/lakehouse-k3s-airflow
+    tag: latest
+    pullPolicy: Always
+
+# GHCR pull secret (패키지가 private이라 필수)
+registry:
+  secretName: ghcr-secret
+
+# 차트 내장 DB/브로커 대신 클러스터의 CNPG 재사용
+postgresql:
+  enabled: false
+redis:
+  enabled: false
+
+data:
+  metadataSecretName: airflow-metadata # sealed-secret-airflow-postgres.yaml
+
+# 값을 비워두면 차트가 랜더마다 난수를 새로 만들어 selfHeal과 충돌한다
+fernetKeySecretName: airflow-fernet-key        # sealed-secret-airflow-fernet.yaml
+jwtSecretName: airflow-jwt-secret              # sealed-secret-airflow-jwt.yaml
+apiSecretKeySecretName: airflow-api-secret-key # sealed-secret-airflow-api.yaml
+
+# DAG과 dbt 프로젝트는 이미지에 굽지 않고 git-sync로 주입
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/kkw855/lakehouse-k3s-airflow.git
+    branch: main
+    rev: HEAD
+    ref: main
+    depth: 1
+    subPath: "dags"
+    wait: 20
+
+logs:
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClassName: local-path
+
+# 실습에 불필요하고 MS-A2 리소스만 차지
+statsd:
+  enabled: false
