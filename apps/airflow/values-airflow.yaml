@@ -58,14 +58,3 @@ migrateDatabaseJob:
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
-
-# 차트는 auth_manager를 FabAuthManager로 기본 설정하지만,
-# FAB이 Flask 세션 서명에 쓰는 [webserver] secret_key는
-# airflowVersion >= 3.0.0 조건에 막혀 주입되지 않는다 (_helpers.yaml:94).
-# 없으면 로그인 시 500: 'NoneType' object has no attribute 'sign'
-extraEnv: |
-  - name: AIRFLOW__WEBSERVER__SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: airflow-api-secret-key
-        key: api-secret-key
