@@ -58,3 +58,8 @@ migrateDatabaseJob:
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
+
+# 성공한 Pod은 계속 정리되고 실패한 것만 남습니다. 파이프라인이 안정되면 빼셔도 됩니다.
+config:
+  kubernetes_executor:
+    delete_worker_pods_on_failure: 'False'
