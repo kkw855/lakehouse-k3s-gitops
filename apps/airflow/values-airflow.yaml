@@ -7,7 +7,7 @@ executor: "KubernetesExecutor"
 images:
   airflow:
     repository: ghcr.io/kkw855/lakehouse-k3s-airflow
-    tag: latest
+    tag: d630c72dff769cb0b7cd1f0914fa5cb355068319
     pullPolicy: Always
 
 # GHCR pull secret (패키지가 private이라 필수)
