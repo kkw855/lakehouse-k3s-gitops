@@ -47,3 +47,14 @@ logs:
 # 실습에 불필요하고 MS-A2 리소스만 차지
 statsd:
   enabled: false
+
+# Helm hook을 쓰면 ArgoCD에서 PostSync로 변환되는데,
+# init 컨테이너가 마이그레이션을 기다리느라 Sync가 안 끝나 hook이 영원히 실행되지 않는다.
+# 일반 리소스로 만들어야 Sync 중에 Job이 생성된다.
+migrateDatabaseJob:
+  useHelmHooks: false
+  applyCustomEnv: false
+
+createUserJob:
+  useHelmHooks: false
+  applyCustomEnv: false
