@@ -42,9 +42,7 @@ dags:
 
 logs:
   persistence:
-    enabled: true
-    size: 2Gi
-    storageClassName: local-path
+    enabled: false
 
 # 실습에 불필요하고 MS-A2 리소스만 차지
 statsd:
