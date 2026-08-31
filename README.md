@@ -174,6 +174,41 @@ Airflow 3은 kubelet에서 직접 로그를 읽어오므로 공유 볼륨 없이
 
 **롤링 업데이트는 새 파드가 Ready 돼야 구 파드를 내린다.** 구 파드가 없어진 PVC를 기다려 Pending이면 서로 물려 영원히 안 끝난다. 구 파드를 직접 삭제.
 
+**⚠️ 워크로드에 CPU limit이 없으면 제어 평면이 무너진다.** 이 클러스터는 노드 3개가 **전부 `control-plane` 겸 `etcd`** 다. Trino 워커에 `resources.limits.cpu`가 없으면 노드 CPU를 100%까지 가져가고, 그러면 etcd Raft 하트비트와 API 서버 요청이 밀린다. 증상은 Trino가 아니라 **kubectl에서 나타난다**:
+
+```
+read tcp 10.11.11.2:61137->10.10.60.101:6443: read: operation timed out
+Unable to connect to the server: dial tcp 10.10.60.101:6443: i/o timeout
+```
+
+TPC-DS sf100 적재 중 실제로 겪었다. 팩트 테이블에서 CPU가 포화되자 API 서버 연결이 끊겨 장시간 작업이 중단됐다. 노드당 10 CPU 기준으로 Trino 몫을 8로 제한해 시스템에 2를 남긴다 (노드당 워커 2개 → 워커당 4).
+
+```yaml
+coordinator:
+  resources:
+    limits:
+      cpu: 4        # requests 만 두면 상한이 없다
+      memory: 11Gi
+worker:
+  resources:
+    limits:
+      cpu: 4
+      memory: 11Gi
+```
+
+프로덕션에서는 컨트롤 플레인 노드에 taint를 걸고 워커를 분리하므로 이 문제가 안 생긴다. 노드를 겸용하는 홈랩에서만 드러나는 함정이다.
+
+**장시간 작업을 `kubectl exec`로 붙들고 있으면 안 된다.** API 서버를 거치는 경로라 위 상황에 그대로 취약하고, 클라이언트가 끊기면 작업도 끊긴다. 파드 안에서 detach 하거나 Job으로 돌린다.
+
+```bash
+kubectl -n lakehouse-k3s exec deploy/trino-coordinator -- bash -c \
+  'nohup sh -c "<긴 작업>" > /tmp/load.log 2>&1 &'
+# 이후에는 짧은 명령으로 로그만 확인
+kubectl -n lakehouse-k3s exec deploy/trino-coordinator -- cat /tmp/load.log
+```
+
+대량 적재는 `CREATE TABLE IF NOT EXISTS ... AS SELECT` 로 짜두면 중간에 끊겨도 재실행으로 이어갈 수 있다. TPC-DS 생성기는 결정적이라 같은 데이터가 나온다.
+
 ## Airflow + dbt
 
 **git-sync 볼륨은 읽기 전용이다.** dbt는 프로젝트 디렉터리에 `target/`과 `logs/`를 쓰므로 그대로 실행하면 **출력 한 줄 없이 exit 2로 죽는다.** 게다가 task Pod은 쿠버네티스 레벨에서 `Succeeded`로 보여서 원인 파악이 어렵다.
