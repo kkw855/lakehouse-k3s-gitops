@@ -235,7 +235,22 @@ env:
 
 **차트 기본 JVM 힙이 coordinator 8G + worker 8G × 2 = 24GB다.** 실습 데이터엔 과하므로 2G로 낮춰뒀다.
 
-**`DROP SCHEMA ... CASCADE`는 MinIO 데이터 파일까지 정리한다.** 반면 `DROP TABLE`은 카탈로그 참조만 끊고 파일을 고아로 남긴다 (강의 README에 적어둔 그 현상). dbt의 table materialization도 매번 새 UUID 폴더를 만들고 이전 것을 남긴다.
+**`DROP TABLE`도 `DROP SCHEMA ... CASCADE`도 MinIO 데이터 파일을 지우지 않는다.** 카탈로그 등록만 끊고 파일은 고아로 남는다 (강의 README에 적어둔 그 현상). dbt의 table materialization도 매번 새 UUID 폴더를 만들고 이전 것을 남긴다.
+
+스토리지까지 비우려면 **스키마를 지운 뒤** 파일을 직접 지워야 한다. 순서가 중요하다 — 파일을 먼저 지우면 카탈로그에 유령 테이블이 남아 조회 시 에러가 난다.
+
+```bash
+# 1. 카탈로그에서 제거
+for s in landing staging curated; do
+  kubectl -n lakehouse-k3s exec deploy/trino-coordinator -- trino --server localhost:8080 --user batman \
+    --execute "DROP SCHEMA IF EXISTS iceberg.$s CASCADE"
+done
+# 2. 고아 파일 제거
+kubectl -n minio exec deploy/minio -- rm -rf \
+  /export/local-lakehouse/landing /export/local-lakehouse/staging /export/local-lakehouse/curated
+```
+
+> MinIO 컨테이너에는 `find` / `sed` 가 없다. `ls`, `du`, `rm` 정도만 쓸 수 있다.
 
 ## 기타
 
