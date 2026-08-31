@@ -1,26 +1,44 @@
 server:
-  workers: 2
+  workers: 6
+
+  config:
+    query:
+      # 클러스터 전체가 한 쿼리에 쓸 수 있는 상한.
+      # 워커 6 × 힙 8G = 48G 중 넉넉히 남기고 잡는다.
+      maxMemory: "30GB"
 
 coordinator:
   jvm:
-    # 차트 기본값 8G. 실습 데이터가 CSV 몇 개라 과하다.
-    maxHeapSize: "2G"
+    maxHeapSize: "8G"
+  config:
+    query:
+      maxMemoryPerNode: "5GB"
   resources:
     requests:
-      cpu: 200m
-      memory: 2560Mi
+      cpu: 2
+      memory: 10Gi
     limits:
-      memory: 3Gi
+      memory: 11Gi
 
 worker:
   jvm:
-    maxHeapSize: "2G"
+    maxHeapSize: "8G"
+  config:
+    query:
+      maxMemoryPerNode: "5GB"
   resources:
     requests:
-      cpu: 200m
-      memory: 2560Mi
+      cpu: 2
+      memory: 10Gi
     limits:
-      memory: 3Gi
+      memory: 11Gi
+
+additionalConfigProperties:
+  # 해시 조인·집계가 힙에 안 들어갈 때 디스크로 흘려보냄.
+  - spill-enabled=true
+  - spiller-spill-path=/tmp/trino-spill
+  - max-spill-per-node=50GB
+  - query-max-spill-per-node=25GB
 
 # 강의의 trino_config/catalog/iceberg.properties 를 그대로 옮긴 것
 catalogs:
