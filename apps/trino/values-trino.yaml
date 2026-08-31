@@ -18,6 +18,7 @@ coordinator:
       cpu: 2
       memory: 10Gi
     limits:
+      cpu: 4
       memory: 11Gi
 
 worker:
@@ -31,6 +32,7 @@ worker:
       cpu: 2
       memory: 10Gi
     limits:
+      cpu: 4
       memory: 11Gi
 
 additionalConfigProperties:
