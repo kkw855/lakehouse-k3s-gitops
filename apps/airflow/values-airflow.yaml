@@ -58,10 +58,3 @@ migrateDatabaseJob:
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
-
-scheduler:
-  enabled: false
-triggerer:
-  enabled: false
-dagProcessor:
-  enabled: false
